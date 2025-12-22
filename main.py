@@ -1,62 +1,119 @@
-class Order:
-    """Class for storing an order"""
-    def __init__(self, side, ticker, order_type, price, filled_count, total_count, status):
-        self.ticker = ticker
-        self.order_type = order_type
-        self.side = side
-        self.price = price
-        self.filled_count = filled_count
-        self.total_count = total_count
-        self.status = status
+from dataclasses import dataclass
 
-    def display_order(self):
+
+@dataclass
+class Order:
+    """Class for storing order data"""
+    operation: str
+    ticker: str
+    order_type: str
+    price: float
+    quantity: int
+    filled_quantity: int = 0
+    status: str = "PENDING"
+
+    def __post_init__(self):
+        if self.price is not None:
+            self.price = float(self.price)
+
+        self.quantity = int(self.quantity)
+
+    def __str__(self):
+        price_display = f"${self.price:.2f} " if self.price is not None else ""
+
         return (
             f"{self.ticker} "
             f"{self.order_type} "
-            f"{self.side} "
-            f"${self.price:.2f} "
-            f"{self.filled_count}/{self.total_count} "
-            f"{self.status} "
-        ).upper()
+            f"{self.operation} "
+            f"{price_display}"
+            f"{self.filled_quantity}/{self.quantity} "
+            f"{self.status}"
+        )
 
 
-class OrderManager:
-    """Manager for processing user orders"""
+class Server:
+    """Server for processing client requests"""
     def __init__(self):
         self.orders = []
 
-    def create_order(self, side, ticker, order_type, price, total_count):
-        """Create a new order"""
-        order = Order(side, ticker, order_type, price.lstrip("$"), 0, total_count, "pending")
+    def handle(self, command: str) -> str:
+        """Request handler"""
+        parts = command.strip().upper().split()
+        if not parts:
+            return "EMPTY COMMAND"
+
+        cmd = parts[0]
+
+        if cmd == "BUY" or cmd == "SELL":
+            return self.create_order(*parts)
+
+        if cmd == "VIEW":
+            return self.view_orders()
+
+        if cmd == "QUOTE":
+            return self.get_quote(parts[1])
+
+        return "UNKNOWN COMMAND"
+
+    def create_order(self, *parts) -> str:
+        """Creating a new order"""
+        if len(parts) == 5:
+            operation, ticker, order_type, price, quantity = parts
+            price = price.lstrip("$")
+        elif len(parts) == 4:
+            operation, ticker, order_type, quantity = parts
+            price = None
+        else:
+            return "INVALID COMMAND"
+
+        if operation not in {"BUY", "SELL"}:
+            return "INVALID OPERATION"
+
+        if order_type not in {"LMT", "MKT"}:
+            return "INVALID ORDER TYPE"
+
+        order = Order(operation, ticker, order_type, price, quantity)
         self.orders.append(order)
-        print(f"You have placed a {order_type} {side} order for {total_count} {ticker} shares at {price} each.")
 
-    def quite_order(self, *args):
-        pass
+        if order_type == "LMT":
+            return f"You have placed a limit {operation.lower()} order for {quantity} {ticker} shares at ${float(price):.2f} each."
+        else:
+            return f"You have placed a market order for {quantity} {ticker} shares."
 
-    def view_orders(self):
-        """Show all users orders"""
+    def get_quote(self, ticker) -> str:
+        """Get information about quotes"""
+        return f"{ticker} BID: $30.00 ASK: $31.00 LAST: $30.00"
+
+    def view_orders(self) -> str:
+        """Show all orders"""
+        result_lines = []
         for i, order in enumerate(self.orders, start=1):
-            print(f"{i}. {order.display_order()}")
+            result_lines.append(f"{i}. {order}")
+        return "\n".join(result_lines)
+
+
+class Client:
+    """Client for sending requests to the server"""
+    def __init__(self, server: Server):
+        self.server = server
+
+    def send(self, command):
+        """Send a request"""
+        response = self.server.handle(command)
+        return response
 
 
 def main():
-    """Client Application"""
-    order = OrderManager()
-    while True:
-        command = input().strip().lower()
-        args = command.split(" ")
+    server = Server()
+    client = Client(server)
 
-        if args[0] == "buy" or args[0] == "sell":
-            order.create_order(*args)
-        elif command == "view orders":
-            order.view_orders()
-        elif args[0] == "quote":
-            order.quite_order(*args)
-        elif command == "quit":
+    while True:
+        command = input("Action: ")
+        if command == "QUIT":
             break
-        else:
-            print("Incorrect command")
+
+        result = client.send(command)
+        print(result, "\n")
 
 
 if __name__ == "__main__":
