@@ -19,7 +19,7 @@ class Manager:
         if order_type not in {"LMT", "MKT"}:
             return "INVALID ORDER TYPE"
 
-        self.server.exchange.create_new_order(operation, ticker, order_type, price, quantity)
+        self.server.exchange.create_order(operation, ticker, order_type, price, quantity)
 
         if order_type == "LMT":
             return f"You have placed a limit {operation.lower()} order for {quantity} {ticker} shares at ${float(price):.2f} each."
@@ -28,8 +28,8 @@ class Manager:
 
     def get_quote(self, ticker) -> str:
         """Get information about quotes"""
-        quote = self.server.exchange.get_quote_info(ticker)
-        return f"{quote.name} BID: ${quote.bid} ASK: ${quote.ask} LAST: ${quote.last}"
+        quote = self.server.exchange.get_quote(ticker)
+        return f"{ticker} BID: ${quote["bid"]:.2f} ASK: ${quote["ask"]:.2f} LAST: ${quote["last"]:.2f}"
 
     def view_orders(self) -> str:
         """Show all orders"""
