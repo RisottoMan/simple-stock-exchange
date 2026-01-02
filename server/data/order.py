@@ -16,8 +16,6 @@ class Order:
         if self.price is not None:
             self.price = float(self.price)
 
-        self.quantity = int(self.quantity)
-
     def __str__(self):
         price_display = f"${self.price:.2f} " if self.price is not None else ""
 

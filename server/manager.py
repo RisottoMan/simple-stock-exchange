@@ -19,7 +19,10 @@ class Manager:
         if order_type not in {"LMT", "MKT"}:
             return "INVALID ORDER TYPE"
 
-        self.server.exchange.create_order(operation, ticker, order_type, price, quantity)
+        if order_type == "LMT" and len(parts) == 4:
+            return "INVALID NUMBER ARGUMENTS FOR ORDER TYPE"
+
+        self.server.exchange.create_order(operation, ticker, order_type, price, int(quantity))
 
         if order_type == "LMT":
             return f"You have placed a limit {operation.lower()} order for {quantity} {ticker} shares at ${float(price):.2f} each."
