@@ -1,4 +1,4 @@
-from server.data.order import Order
+from .data import Order
 
 
 class Exchange:

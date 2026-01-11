@@ -1,5 +1,5 @@
-from server.manager import Manager
-from server.exchange import Exchange
+from .manager import Manager
+from .exchange import Exchange
 
 
 class Server:
