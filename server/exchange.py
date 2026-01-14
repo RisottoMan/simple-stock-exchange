@@ -1,72 +1,65 @@
-from .data import Order
+from server.data import Order, Status
 
 
 class Exchange:
     def __init__(self, server):
         self.server = server
-        self.orders = []
-        self.order_book = {
-            "SNAP":
-                {
-                    "BUY": [
-                        {"price": 30.50, "quantity": 10},
-                        {"price": 30.00, "quantity": 20},
-                        {"price": 29.00, "quantity": 100},
-                    ],
-                    "SELL": [
-                        {"price": 31.00, "quantity": 10},
-                        {"price": 31.50, "quantity": 30},
-                        {"price": 32.00, "quantity": 100},
-                    ],
-            },
-            "FB":
-                {
-                    "BUY": [{"price": 25.00, "quantity": 100}],
-                    "SELL": [{"price": 26.00, "quantity": 50}],
-            }
-        }
+        self.orders_history = []
+        self.order_book = [
+            Order("SNAP", "BUY", "LMT", 30.50, 10),
+            Order("SNAP", "BUY", "LMT", 30.00, 20),
+            Order("SNAP", "BUY", "LMT", 29.00, 100),
+            Order("SNAP", "SELL", "LMT", 31.00, 10),
+            Order("SNAP", "SELL", "LMT", 31.50, 30),
+            Order("SNAP", "SELL", "LMT", 29.00, 100),
+            Order("FB", "BUY", "LMT", 25.00, 100),
+            Order("FB", "SELL", "LMT", 26.00, 50),
+        ]
         self.last_price = {
             "SNAP": 30.00,
             "FB": 26.00
         }
 
     def create_order(self, operation, ticker, order_type, price, quantity):
-        new_order = Order(operation, ticker, order_type, price, quantity)
-        self.orders.append(new_order)
+        order = Order(operation, ticker, order_type, price, quantity)
+        self.orders_history.append(order)
+        self.__execute_order(order)
 
-        temp_quantity = quantity
-        book = self.order_book.get(ticker)
-        current_orders = book.get("BUY" if operation == "SELL" else "SELL")
+    def __execute_order(self, order: Order):
+        operation = "BUY" if order.operation == "SELL" else "SELL"
+        filtered_order_book = filter(lambda item: item.ticker == order.ticker
+                                     and item.operation == operation, self.order_book)
 
-        for order in current_orders:
-            if temp_quantity <= 0:
+        # todo сортировка должна зависеть от стакана и поля price
+        for order_item in sorted(filtered_order_book, key=lambda value: value.price):
+            if order.quantity == order.filled_quantity:
                 break
 
-            if order_type == "LMT":
-                if operation == "BUY" and order["price"] > float(price):
+            if order_item.order_type == "LMT":
+                if order_item.operation == "BUY" and order_item.price >= order.price:
                     break
-                if operation == "SELL" and order["price"] < float(price):
+                if order_item.operation == "SELL" and order_item.price <= order.price:
                     break
 
-            can_take = min(temp_quantity, order["quantity"])
-            order["quantity"] -= can_take
-            temp_quantity -= can_take
-            new_order.filled_quantity += can_take
-            new_order.status = "PARTIAL"
+            can_take = min(order.quantity - order.filled_quantity,
+                           order_item.quantity - order_item.filled_quantity)
+            order_item.filled_quantity += can_take
+            order.filled_quantity += can_take
 
-            if order["quantity"] == 0:
-                current_orders.remove(order)
+            if order_item.quantity == order_item.filled_quantity:
+                order_item.status = Status.FILLED
+                self.order_book.remove(order_item)
 
-        if temp_quantity == 0:
-            new_order.status = "FILLED"
+        if order.quantity == order.filled_quantity:
+            order.status = Status.FILLED
         else:
-            if order_type == "LMT":
-                self.order_book[ticker][operation].append({
-                    "price": float(price),
-                    "quantity": temp_quantity
-                })
-            elif order_type == "MKT":
-                new_order.status = "PARTIAL CANCELED"
+            if order.filled_quantity > 0:
+                order.status = Status.PARTIAL
+
+            if order.order_type == "LMT":
+                self.order_book.append(order)
+            elif order.order_type == "MKT":
+                order.status = Status.CANCELED
 
     def get_quote(self, ticker):
         book = self.order_book.get(ticker)
@@ -82,4 +75,4 @@ class Exchange:
         }
 
     def get_orders(self):
-        return self.orders
+        return self.orders_history

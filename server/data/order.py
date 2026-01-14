@@ -1,16 +1,17 @@
 from dataclasses import dataclass
+from .status import Status
 
 
 @dataclass
 class Order:
     """Class for storing order data"""
-    operation: str
     ticker: str
+    operation: str
     order_type: str
     price: float
     quantity: int
     filled_quantity: int = 0
-    status: str = "PENDING"
+    status: Status = Status.PENDING
 
     def __post_init__(self):
         if self.price is not None:
@@ -25,5 +26,5 @@ class Order:
             f"{self.operation} "
             f"{price_display}"
             f"{self.filled_quantity}/{self.quantity} "
-            f"{self.status}"
+            f"{self.status.value}"
         )

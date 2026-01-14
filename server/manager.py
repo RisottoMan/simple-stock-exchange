@@ -22,7 +22,8 @@ class Manager:
         if order_type == "LMT" and len(parts) == 4:
             return "INVALID NUMBER ARGUMENTS FOR ORDER TYPE"
 
-        self.server.exchange.create_order(operation, ticker, order_type, price, int(quantity))
+        #todo - попытаться проверить, что quantity это целое число
+        self.server.exchange.create_order(ticker, operation, order_type, price, int(quantity))
 
         if order_type == "LMT":
             return f"You have placed a limit {operation.lower()} order for {quantity} {ticker} shares at ${float(price):.2f} each."
@@ -31,7 +32,13 @@ class Manager:
 
     def get_quote(self, ticker) -> str:
         """Get information about quotes"""
+        if ticker is None or ticker == "":
+            return "EMPTY TICKER ARGUMENT"
+
         quote = self.server.exchange.get_quote(ticker)
+        if quote is None:
+            return "INCORRECT TICKER NAME"
+
         return f"{ticker} BID: ${quote["bid"]:.2f} ASK: ${quote["ask"]:.2f} LAST: ${quote["last"]:.2f}"
 
     def view_orders(self) -> str:
