@@ -13,9 +13,6 @@ def test_quote_without_arg(manager):
     assert manager.get_quote(None) == "EMPTY TICKER ARGUMENT"
     assert manager.get_quote("") == "EMPTY TICKER ARGUMENT"
 
-#def test_quote_incorrect_ticker(manager):
-    #assert manager.get_quote("SOMETHING") == "INCORRECT TICKER NAME"
-
 def test_invalid_len_args(manager):
     assert manager.create_order("BUY", "SNAP", "LMT") == "INVALID COMMAND"
     assert manager.create_order("BUY", "SNAP", "LMT", "$30", "50", "10") == "INVALID COMMAND"
@@ -33,9 +30,3 @@ def test_invalid_args_for_limit_order(manager):
 
 def test_convert_price_to_float(manager):
     assert manager.create_order("BUY", "SNAP", "LMT", "$30", "50") == manager.create_order("BUY", "SNAP", "LMT", "$30.00", "50")
-
-#def test_convert_quantity_to_int(manager):
-    #assert manager.create_order("BUY", "SNAP", "LMT", "$30", "50") == manager.create_order("BUY", "SNAP", "LMT", "$30", "50.00")
-
-#def test_show_orders_empty(manager):
-    #pass
