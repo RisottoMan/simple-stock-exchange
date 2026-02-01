@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .status import Status
+from server.enum.status import Status
 
 
 @dataclass

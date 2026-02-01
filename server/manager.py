@@ -1,3 +1,6 @@
+from .enum import Operation, OrderType, ServerMessage
+
+
 class Manager:
     def __init__(self, server):
         self.server = server
@@ -11,21 +14,22 @@ class Manager:
             operation, ticker, order_type, quantity = parts
             price = None
         else:
-            return "INVALID COMMAND"
+            return ServerMessage.INVALID_COMMAND
 
-        if operation not in {"BUY", "SELL"}:
-            return "INVALID OPERATION"
+        if operation not in Operation:
+            return ServerMessage.INVALID_OPERATION
 
-        if order_type not in {"LMT", "MKT"}:
-            return "INVALID ORDER TYPE"
+        if order_type not in OrderType:
+            return ServerMessage.INVALID_ORDER_TYPE
 
-        if order_type == "LMT" and len(parts) == 4:
-            return "INVALID NUMBER ARGUMENTS FOR ORDER TYPE"
+        if order_type == OrderType.LIMIT and len(parts) == 4:
+            return ServerMessage.INVALID_ORDER_TYPE_ARGUMENTS
 
-        #todo - попытаться проверить, что quantity это целое число
-        self.server.exchange.create_order(ticker, operation, order_type, price, int(quantity))
+        response = self.server.exchange.create_order(ticker, operation, order_type, price, int(quantity))
+        if not response:
+            return ServerMessage.ORDER_CREATE_ERROR
 
-        if order_type == "LMT":
+        if order_type == OrderType.LIMIT:
             return f"You have placed a limit {operation.lower()} order for {quantity} {ticker} shares at ${float(price):.2f} each."
         else:
             return f"You have placed a market order for {quantity} {ticker} shares."
@@ -33,11 +37,11 @@ class Manager:
     def get_quote(self, ticker) -> str:
         """Get information about quotes"""
         if ticker is None or ticker == "":
-            return "EMPTY TICKER ARGUMENT"
+            return ServerMessage.EMPTY_TICKER_ARGUMENT
 
         quote = self.server.exchange.get_quote(ticker)
         if quote is None:
-            return "INCORRECT TICKER NAME"
+            return ServerMessage.INCORRECT_TICKER_NAME
 
         return f"{ticker} BID: ${quote["bid"]:.2f} ASK: ${quote["ask"]:.2f} LAST: ${quote["last"]:.2f}"
 
