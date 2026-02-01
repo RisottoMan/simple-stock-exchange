@@ -1,13 +1,10 @@
 import pytest
-from server import Server, Manager
+from server.manager import Manager
+
 
 @pytest.fixture
-def server():
-    return Server()
-
-@pytest.fixture
-def manager(server):
-    return Manager(server)
+def manager():
+    return Manager()
 
 def test_quote_without_arg(manager):
     assert manager.get_quote(None) == "EMPTY TICKER ARGUMENT"

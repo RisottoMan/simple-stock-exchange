@@ -1,11 +1,12 @@
 from .enum import Operation, OrderType, ServerMessage
+from .exchange import Exchange
 
 
 class Manager:
-    def __init__(self, server):
-        self.server = server
+    def __init__(self):
+        self.exchange = Exchange()
 
-    def create_order(self, *parts) -> str:
+    def create_order(self, *parts: str) -> str:
         """Creating a new order"""
         if len(parts) == 5:
             operation, ticker, order_type, price, quantity = parts
@@ -25,21 +26,21 @@ class Manager:
         if order_type == OrderType.LIMIT and len(parts) == 4:
             return ServerMessage.INVALID_ORDER_TYPE_ARGUMENTS
 
-        response = self.server.exchange.create_order(ticker, operation, order_type, price, int(quantity))
+        response = self.exchange.create_order(ticker, operation, order_type, price, int(quantity))
         if not response:
-            return ServerMessage.ORDER_CREATE_ERROR
+            return ServerMessage.ERROR_CREATE_ORDER
 
         if order_type == OrderType.LIMIT:
             return f"You have placed a limit {operation.lower()} order for {quantity} {ticker} shares at ${float(price):.2f} each."
         else:
             return f"You have placed a market order for {quantity} {ticker} shares."
 
-    def get_quote(self, ticker) -> str:
+    def get_quote(self, ticker: str) -> str:
         """Get information about quotes"""
         if ticker is None or ticker == "":
             return ServerMessage.EMPTY_TICKER_ARGUMENT
 
-        quote = self.server.exchange.get_quote(ticker)
+        quote = self.exchange.get_quote(ticker)
         if quote is None:
             return ServerMessage.INCORRECT_TICKER_NAME
 
@@ -47,7 +48,7 @@ class Manager:
 
     def view_orders(self) -> str:
         """Show all orders"""
-        orders = self.server.exchange.get_orders()
+        orders = self.exchange.get_orders()
 
         result_lines = []
         for i, order in enumerate(orders, start=1):

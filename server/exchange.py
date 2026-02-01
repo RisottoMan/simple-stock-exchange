@@ -3,12 +3,17 @@ from .enum import Status, Operation, OrderType
 
 
 class Exchange:
-    def __init__(self, server):
-        self.server = server
+    def __init__(self):
         self.orders_history = []
         self.order_book = []
 
-    def create_order(self, ticker, operation, order_type, price, quantity) -> bool:
+    def create_order(
+            self,
+            ticker: str,
+            operation: str,
+            order_type: str,
+            price: float,
+            quantity: int) -> bool:
         try:
             order = Order(ticker, operation, order_type, price, quantity)
         except:
@@ -54,7 +59,7 @@ class Exchange:
             if order.order_type == OrderType.LIMIT:
                 self.order_book.append(order)
 
-    def get_quote(self, ticker) -> dict:
+    def get_quote(self, ticker: str) -> dict:
         order_book = [order for order in self.order_book if order.ticker == ticker]
         history_book = [order for order in self.orders_history if
                       order.ticker == ticker and order.status == Status.FILLED]

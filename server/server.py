@@ -1,13 +1,11 @@
 from .manager import Manager
-from .exchange import Exchange
 from .enum import ServerMessage, ServerCommand
 
 
 class Server:
     """Server for processing client requests"""
     def __init__(self):
-        self.manager = Manager(self)
-        self.exchange = Exchange(self)
+        self.manager = Manager()
 
     def handle(self, command: str) -> str:
         """Request handler"""
